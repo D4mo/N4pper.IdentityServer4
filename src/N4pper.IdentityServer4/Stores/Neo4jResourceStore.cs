@@ -10,7 +10,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace N4pper.IdentityServer4
+namespace N4pper.IdentityServer4.Stores
 {
     /// <summary>
     /// Implementation of IResourceStore thats uses EF.

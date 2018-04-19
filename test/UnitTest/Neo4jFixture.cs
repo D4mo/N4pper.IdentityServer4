@@ -23,8 +23,8 @@ namespace UnitTest
             sc.AddSingleton<IConfigurationRoot>(Configuration);
             
             sc.AddN4pper();
-
-            sc.AddIdentityServer4Neo4jStores(new Options() { Uri = Configuration.GetConnectionString("DefaultConnection") });
+            sc.AddIdentityServer()
+                .AddNeo4jConfigurationAndOperationalStore(new Options() { Uri = Configuration.GetConnectionString("DefaultConnection") });
 
             sc.AddTransient<Neo4jServer_DriverBuilder>(provider => new Neo4jServer_DriverBuilder(Configuration));
 
