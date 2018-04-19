@@ -48,11 +48,14 @@ namespace N4pper.IdentityServer4.Stores
                 Rel rel = new Rel(type: typeof(Relationships.Has));
 
                 ApiResource result = await session.AsAsync(s =>
-                s.ExecuteQuery<Neo4jApiResource, IEnumerable<Neo4jSecret>, IEnumerable<Neo4jScope>>(
+                s.ExecuteQuery<ApiResource, IEnumerable<Secret>, IEnumerable<Scope>>(
                 $"MATCH (c{a.Labels} {{{nameof(ApiResource.Name)}:${nameof(name)}}}) " +
-                $"MATCH (c)-{rel}->(s{secret.Labels}) " +
-                $"MATCH (c)-{rel}->(sc{scope.Labels}) " +
-                $"RETURN c, collect(s) as s, collect(sc) as sc",
+                $"OPTIONAL MATCH (c)-{rel}->(s{secret.Labels}) " +
+                $"OPTIONAL MATCH (c)-{rel}->(sc{scope.Labels}) " +
+                $"WITH c,s,sc ORDER BY id(c),id(s),id(sc) " +
+                $"WITH c, {{s:collect(distinct s), sc:collect(distinct sc)}} AS val " +
+                $"WITH c, val.s AS s, val.sc AS sc " +
+                $"RETURN c, s, sc",
                 (api, secrets, scopes) =>
                 {
                     api.ApiSecrets = secrets?.Select(p => p as Secret)?.ToList();
@@ -87,10 +90,14 @@ namespace N4pper.IdentityServer4.Stores
                 List<Neo4jApiResource> result = await session.AsAsync(s =>
                 s.ExecuteQuery<Neo4jApiResource, IEnumerable<Neo4jSecret>, IEnumerable<Neo4jScope>>(
                 $"MATCH (c{a.Labels}) " +
-                $"MATCH (c)-{rel}->(s{secret.Labels}) " +
-                $"MATCH (c)-{rel}->(sc{scope.Labels}) " +
-                $"WHERE sc.{nameof(Scope.Name)} IN ${nameof(names)} " +
-                $"RETURN c, collect(s) as s, collect(sc) as sc",
+                $"OPTIONAL MATCH (c)-{rel}->(s{secret.Labels}) " +
+                $"OPTIONAL MATCH (c)-{rel}->(sc{scope.Labels}) " +
+                $"WITH c,s,sc ORDER BY id(c),id(s),id(sc) " +
+                $"WITH c, {{s:collect(distinct s), sc:collect(distinct sc)}} AS val " +
+                $"WITH c, val.s AS s, val.sc AS sc " +
+                $"WHERE sc IS NOT NULL AND FILTER(x in sc where x.{nameof(Scope.Name)} in ${nameof(names)}) <> sc " +
+                $"WITH c,s,sc ORDER BY id(c) " +
+                $"RETURN c, s, sc",
                 (api, secrets, scopes) =>
                 {
                     api.ApiSecrets = secrets?.Select(p => p as Secret)?.ToList();
@@ -146,9 +153,12 @@ namespace N4pper.IdentityServer4.Stores
                 List<Neo4jApiResource> apiResources = await session.AsAsync(s =>
                 s.ExecuteQuery<Neo4jApiResource, IEnumerable<Neo4jSecret>, IEnumerable<Neo4jScope>>(
                 $"MATCH (c{a.Labels}) " +
-                $"MATCH (c)-{rel}->(s{secret.Labels}) " +
-                $"MATCH (c)-{rel}->(sc{scope.Labels}) " +
-                $"RETURN c, collect(s) as s, collect(sc) as sc",
+                $"OPTIONAL MATCH (c)-{rel}->(s{secret.Labels}) " +
+                $"OPTIONAL MATCH (c)-{rel}->(sc{scope.Labels}) " +
+                $"WITH c,s,sc ORDER BY id(c),id(s),id(sc) " +
+                $"WITH c, {{s:collect(distinct s), sc:collect(distinct sc)}} AS val " +
+                $"WITH c, val.s AS s, val.sc AS sc ORDER BY id(c) " +
+                $"RETURN c, s, sc",
                 (api, secrets, scopes) =>
                 {
                     api.ApiSecrets = secrets?.Select(p => p as Secret)?.ToList();

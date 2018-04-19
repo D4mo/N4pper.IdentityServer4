@@ -358,12 +358,12 @@ namespace N4pper.IdentityServer4
             {
                 Node n = new Node(type: typeof(Neo4jPersistedGrant));
 
-                Neo4jClient newClient = await session.AsAsync(s =>
-                s.ExecuteQuery<Neo4jClient>($"CREATE (p{n.Labels}) SET p+=${nameof(grant)}, p.{nameof(IGraphEntity.EntityId)}=id(p) RETURN p",
+                Neo4jPersistedGrant newGrant = await session.AsAsync(s =>
+                s.ExecuteQuery<Neo4jPersistedGrant>($"CREATE (p{n.Labels}) SET p+=${nameof(grant)}, p.{nameof(IGraphEntity.EntityId)}=id(p) RETURN p",
                     new { grant }).FirstOrDefault());
 
-                if (grant is Neo4jPersistedGrant)
-                    (grant as Neo4jPersistedGrant).EntityId = newClient.EntityId;
+                if (grant is IGraphEntity)
+                    (grant as IGraphEntity).EntityId = newGrant.EntityId;
             }
         }
         public static async Task UpdatePersistedGrantAsync(this IdentityServerDriverProvider ext, PersistedGrant grant)
@@ -373,7 +373,7 @@ namespace N4pper.IdentityServer4
 
             using (ISession session = ext.GetDriver().Session())
             {
-                Node n = new Node(type: typeof(Neo4jPersistedGrant));
+                Node n = new Node(type: typeof(PersistedGrant));
 
                 await session.RunAsync(
                     $"MATCH (n{n.Labels} {{{nameof(PersistedGrant.Key)}:${nameof(grant)}.{nameof(PersistedGrant.Key)}}}) " +
@@ -389,7 +389,7 @@ namespace N4pper.IdentityServer4
 
             using (ISession session = ext.GetDriver().Session())
             {
-                Node n = new Node(type: typeof(Neo4jPersistedGrant));
+                Node n = new Node(type: typeof(PersistedGrant));
 
                 await session.RunAsync(
                     $"MATCH (n{n.Labels} {{{nameof(PersistedGrant.Key)}:${nameof(key)}}})" +
@@ -410,12 +410,12 @@ namespace N4pper.IdentityServer4
             {
                 Node n = new Node(type: resType);
 
-                Neo4jClient newClient = await session.AsAsync(s =>
-                s.ExecuteQuery<Neo4jClient>($"CREATE (p{n.Labels}) SET p+=${nameof(resource)}, p.{nameof(IGraphEntity.EntityId)}=id(p) RETURN p",
+                Resource newResource = await session.AsAsync(s =>
+                s.ExecuteQuery<Resource>($"CREATE (p{n.Labels}) SET p+=${nameof(resource)}, p.{nameof(IGraphEntity.EntityId)}=id(p) RETURN p",
                     new { resource = resArg }).FirstOrDefault());
 
                 if (resource is IGraphEntity)
-                    (resource as IGraphEntity).EntityId = newClient.EntityId;
+                    (resource as IGraphEntity).EntityId = (newResource as IGraphEntity)?.EntityId;
             }
         }
         public static async Task UpdateResourceAsync(this IdentityServerDriverProvider ext, Resource resource)
@@ -433,7 +433,7 @@ namespace N4pper.IdentityServer4
                 await session.RunAsync(
                     $"MATCH (n{n.Labels} {{{nameof(Resource.Name)}:${nameof(resource)}.{nameof(Resource.Name)}}}) " +
                     $"SET n+=${nameof(resource)}",
-                    new { resource });
+                    new { resource = resArg });
             }
         }
         public static async Task RemoveResourceAsync(this IdentityServerDriverProvider ext, Resource resource)
@@ -623,7 +623,7 @@ namespace N4pper.IdentityServer4
                     new { name, scopeName });
             }
         }
-        public static async Task ClearAllApiResourceScopetsAsync(this IdentityServerDriverProvider ext, ApiResource resource)
+        public static async Task ClearAllApiResourceScopesAsync(this IdentityServerDriverProvider ext, ApiResource resource)
         {
             ext = ext ?? throw new ArgumentNullException(nameof(ext));
 

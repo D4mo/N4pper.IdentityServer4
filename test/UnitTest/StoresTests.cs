@@ -43,6 +43,7 @@ namespace UnitTest
             Assert.NotNull(result);
             Assert.Equal(new string[] { "aaa", "bbb" }, result.RedirectUris);
             Assert.Equal("test", result.ClientName);
+            Assert.Equal(AccessTokenType.Reference, result.AccessTokenType);
 
             result.ClientName = "test2";
             result.RedirectUris.Add("ccc");
@@ -234,6 +235,270 @@ namespace UnitTest
             Assert.Equal(argsClaim.Select(p => new Tuple<string, string>(p.Type, p.Value)), result.Claims.Select(p => new Tuple<string, string>(p.Type, p.Value)));
             Assert.Equal(argsSecret, result.ClientSecrets);
             Assert.Equal(argProps, result.Properties);
+        }
+
+
+        [Fact]
+        public void CanCreateAndUpdateAndDeletePersistedGrant()
+        {
+            IPersistedGrantStore store = Fixture.GetService<IPersistedGrantStore>();
+
+            PersistedGrant grant = CreateGrant();
+
+            PersistedGrant result = store.GetAsync(grant.Key).Result;
+            Assert.Null(result);
+
+            Provider.AddPersistedGrantAsync(grant).Wait();
+            
+            result = store.GetAsync(grant.Key).Result;
+            Assert.NotNull(result);
+            Assert.NotEqual("test", result.Data);
+
+            result.Data = "test";
+
+            Provider.UpdatePersistedGrantAsync(result).Wait();
+
+            result = store.GetAsync(grant.Key).Result;
+            Assert.NotNull(result);
+            Assert.Equal("test", result.Data);
+
+            Provider.RemovePersistedGrantAsync(result).Wait();
+
+            result = store.GetAsync(grant.Key).Result;
+            Assert.Null(result);
+        }
+
+        [Fact]
+        public void PersistedGrantStore()
+        {
+            IPersistedGrantStore store = Fixture.GetService<IPersistedGrantStore>();
+
+            PersistedGrant grant1 = CreateGrant("aaa","t1");
+            PersistedGrant grant2 = CreateGrant("aaa");
+            PersistedGrant grant3 = CreateGrant("aaa");
+            PersistedGrant grant4 = CreateGrant();
+            PersistedGrant grant5 = CreateGrant();
+
+            store.StoreAsync(grant1).Wait();
+            store.StoreAsync(grant2).Wait();
+            store.StoreAsync(grant3).Wait();
+            store.StoreAsync(grant4).Wait();
+            store.StoreAsync(grant5).Wait();
+
+            List<PersistedGrant> results = store.GetAllAsync("aaa").Result?.ToList();
+            Assert.Equal(3, results.Count);
+
+            store.RemoveAllAsync("aaa", grant1.ClientId, "t1").Wait();
+
+            results = store.GetAllAsync("aaa").Result?.ToList();
+            Assert.Equal(2, results.Count);
+
+            store.RemoveAllAsync("aaa", grant1.ClientId).Wait();
+
+            results = store.GetAllAsync("aaa").Result?.ToList();
+            Assert.Empty(results);
+
+            PersistedGrant result = store.GetAsync(grant5.Key).Result;
+            Assert.NotNull(result);
+
+            store.RemoveAsync(grant5.Key);
+            result = store.GetAsync(grant5.Key).Result;
+            Assert.Null(result);
+        }
+
+        [Fact]
+        public void CanCreateAndUpdateAndDeleteResources()
+        {
+            IResourceStore store = Fixture.GetService<IResourceStore>();
+
+            ApiResource apiResource = CreateApiResource();
+
+            Resource result = store.FindApiResourceAsync(apiResource.Name).Result;
+            Assert.Null(result);
+
+            Provider.AddResourceAsync(apiResource).Wait();
+
+            result = store.FindApiResourceAsync(apiResource.Name).Result;
+            Assert.NotNull(result);
+            Assert.NotEqual("test", result.Description);
+            Assert.True(result is ApiResource);
+
+            result.Description = "test";
+            Provider.UpdateResourceAsync(result).Wait();
+
+            result = store.FindApiResourceAsync(apiResource.Name).Result;
+            Assert.NotNull(result);
+            Assert.Equal("test", result.Description);
+            Assert.True(result is ApiResource);
+            
+            Provider.RemoveResourceAsync(apiResource).Wait();
+            result = store.FindApiResourceAsync(apiResource.Name).Result;
+            Assert.Null(result);
+
+            IdentityResource idResource = CreateIdentityResource();
+
+            result = store.FindIdentityResourcesByScopeAsync(new string[] { idResource.Name }).Result.FirstOrDefault();
+            Assert.Null(result);
+
+            Provider.AddResourceAsync(idResource).Wait();
+
+            result = store.FindIdentityResourcesByScopeAsync(new string[] { idResource.Name }).Result.FirstOrDefault();
+            Assert.NotNull(result);
+            Assert.NotEqual("test", result.Description);
+            Assert.True(result is IdentityResource);
+
+            result.Description = "test";
+            Provider.UpdateResourceAsync(result).Wait();
+
+            result = store.FindIdentityResourcesByScopeAsync(new string[] { idResource.Name }).Result.FirstOrDefault();
+            Assert.NotNull(result);
+            Assert.Equal("test", result.Description);
+            Assert.True(result is IdentityResource);
+
+            Provider.RemoveResourceAsync(idResource).Wait();
+            result = store.FindIdentityResourcesByScopeAsync(new string[] { idResource.Name }).Result.FirstOrDefault();
+            Assert.Null(result);
+        }
+        
+        [Fact]
+        public void CanManageApiResourceSecrets()
+        {
+            IResourceStore store = Fixture.GetService<IResourceStore>();
+
+            ApiResource apiResource = CreateApiResource();
+
+            ApiResource result = store.FindApiResourceAsync(apiResource.Name).Result;
+            Assert.Null(result);
+
+            Provider.AddResourceAsync(apiResource).Wait();
+
+            result = store.FindApiResourceAsync(apiResource.Name).Result;
+            Assert.NotNull(result);
+            Assert.Equal(new List<Secret>(), result.ApiSecrets);
+
+            List<Secret> args = new List<Secret>() { CreateSecret(), CreateSecret() };
+
+            Provider.SetApiResourceSecretsAsync(result, args).Wait();
+
+            result = store.FindApiResourceAsync(apiResource.Name).Result;
+            Assert.NotNull(result);
+            Assert.Equal(args, result.ApiSecrets);
+            Assert.NotEqual("test", result.ApiSecrets.First().Type);
+
+            args[0].Type = "test";
+
+            Provider.ReplaceApiResourceSecretAsync(result, args[0]).Wait();
+
+            result = store.FindApiResourceAsync(apiResource.Name).Result;
+            Assert.NotNull(result);
+            Assert.Equal(args, result.ApiSecrets);
+            Assert.Equal("test", result.ApiSecrets.First().Type);
+
+            Provider.RemoveApiResourceSecretAsync(result, args[0]).Wait();
+            args.RemoveAt(0);
+
+            result = store.FindApiResourceAsync(apiResource.Name).Result;
+            Assert.NotNull(result);
+            Assert.Equal(args, result.ApiSecrets);
+
+            Provider.ClearAllApiResourceSecretsAsync(result).Wait();
+
+            result = store.FindApiResourceAsync(apiResource.Name).Result;
+            Assert.NotNull(result);
+            Assert.Equal(new List<Secret>(), result.ApiSecrets);
+
+            Assert.Throws<AggregateException>(() => Provider.SetApiResourceSecretsAsync(result, null).Wait());
+        }
+        
+        [Fact]
+        public void CanManageApiResourceScopes()
+        {
+            IResourceStore store = Fixture.GetService<IResourceStore>();
+
+            ApiResource apiResource = CreateApiResource();
+
+            ApiResource result = store.FindApiResourceAsync(apiResource.Name).Result;
+            Assert.Null(result);
+
+            Provider.AddResourceAsync(apiResource).Wait();
+
+            result = store.FindApiResourceAsync(apiResource.Name).Result;
+            Assert.NotNull(result);
+            Assert.Equal(new List<Scope>(), result.Scopes);
+
+            List<Scope> args = new List<Scope>() { CreateScope(), CreateScope() };
+
+            Provider.SetApiResourceScopesAsync(result, args).Wait();
+
+            result = store.FindApiResourceAsync(apiResource.Name).Result;
+            Assert.NotNull(result);
+            Assert.Equal(args.Select(p=>p.Name), result.Scopes.Select(p => p.Name));
+            Assert.NotEqual("test", result.Scopes.First().Description);
+
+            args[0].Description = "test";
+
+            Provider.ReplaceApiResourceScopeAsync(result, args[0]).Wait();
+
+            result = store.FindApiResourceAsync(apiResource.Name).Result;
+            Assert.NotNull(result);
+            Assert.Equal(args.Select(p => p.Name), result.Scopes.Select(p => p.Name));
+            Assert.Equal("test", result.Scopes.First().Description);
+
+            Provider.RemoveApiResourceScopeAsync(result, args[0]).Wait();
+            args.RemoveAt(0);
+
+            result = store.FindApiResourceAsync(apiResource.Name).Result;
+            Assert.NotNull(result);
+            Assert.Equal(args.Select(p => p.Name), result.Scopes.Select(p => p.Name));
+
+            Provider.ClearAllApiResourceScopesAsync(result).Wait();
+
+            result = store.FindApiResourceAsync(apiResource.Name).Result;
+            Assert.NotNull(result);
+            Assert.Equal(new List<Scope>(), result.Scopes);
+
+            Assert.Throws<AggregateException>(() => Provider.SetApiResourceScopesAsync(result, null).Wait());
+        }
+
+        [Fact]
+        public void ResourceStore()
+        {
+            IResourceStore store = Fixture.GetService<IResourceStore>();
+
+            ApiResource res1 = CreateApiResource();
+            ApiResource res2 = CreateApiResource();
+            IdentityResource res3 = CreateIdentityResource();
+            IdentityResource res4 = CreateIdentityResource();
+            IdentityResource res5 = CreateIdentityResource();
+
+            Provider.AddResourceAsync(res1).Wait();
+            Provider.AddResourceAsync(res2).Wait();
+            Provider.AddResourceAsync(res3).Wait();
+            Provider.AddResourceAsync(res4).Wait();
+            Provider.AddResourceAsync(res5).Wait();
+
+            List<Scope> argScope = new List<Scope>() { new Scope() { Name = "aaa" }, new Scope() { Name = "bbb" }, new Scope() { Name = "ccc" } };
+            List<Secret> argSec = new List<Secret>() { CreateSecret(), CreateSecret() };
+            Provider.SetApiResourceScopesAsync(res1, argScope).Wait();
+            Provider.SetApiResourceSecretsAsync(res1, argSec).Wait();
+            Provider.SetApiResourceScopesAsync(res2, new List<Scope>() { new Scope() { Name = "aaa" }, new Scope() { Name = "bbb" } }).Wait();
+
+            List<IdentityResource> idres = store.FindIdentityResourcesByScopeAsync(new string[] { res4.Name, res5.Name }).Result?.ToList();
+            Assert.NotNull(idres);
+            Assert.Equal(2, idres.Count);
+
+            List<ApiResource> apires = store.FindApiResourcesByScopeAsync(new string[] { "bbb", "ccc" }).Result?.ToList();
+            Assert.NotNull(apires);
+            Assert.Equal(2, apires.Count);
+            Assert.Equal(argScope.Select(p => p.Name), apires[0].Scopes.Select(p => p.Name));
+            Assert.Equal(argSec, apires[0].ApiSecrets);
+
+            Resources res = store.GetAllResourcesAsync().Result;
+            Assert.NotNull(res);
+            Assert.Equal(2, res.ApiResources.Count);
+            Assert.Equal(3, res.IdentityResources.Count);
+            Assert.Equal(argScope.Select(p => p.Name), res.ApiResources.First().Scopes.Select(p => p.Name));
+            Assert.Equal(argSec, res.ApiResources.First().ApiSecrets);
         }
     }
 }

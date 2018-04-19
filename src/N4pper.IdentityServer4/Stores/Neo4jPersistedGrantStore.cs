@@ -45,8 +45,8 @@ namespace N4pper.IdentityServer4.Stores
 
                 IResultSummary summary = await (await session.RunAsync(
                     $"MERGE (n{n.Labels} {{{nameof(PersistedGrant.Key)}:$value.{nameof(token.Key)}}}) " +
-                    $"ON CREATE n+=$value, n.{nameof(IGraphEntity.EntityId)}=id(n) " +
-                    $"ON MATCH n+=$value, n.{nameof(IGraphEntity.EntityId)}=id(n) ", new { value = token })).SummaryAsync();
+                    $"ON CREATE SET n+=$value, n.{nameof(IGraphEntity.EntityId)}=id(n) " +
+                    $"ON MATCH SET n+=$value, n.{nameof(IGraphEntity.EntityId)}=id(n) ", new { value = token })).SummaryAsync();
 
                 if (!summary.Counters.ContainsUpdates && summary.Counters.NodesCreated == 0)
                     _logger.LogWarning("No node have been created or updated.");
@@ -64,8 +64,8 @@ namespace N4pper.IdentityServer4.Stores
             {
                 Node n = new Node(type: typeof(PersistedGrant));
 
-                Neo4jPersistedGrant result = await session.AsAsync(s=>
-                    s.ExecuteQuery<Neo4jPersistedGrant>($"MATCH (n{n.Labels} {{{nameof(PersistedGrant.Key)}:${nameof(key)}}}) " +
+                PersistedGrant result = await session.AsAsync(s=>
+                    s.ExecuteQuery<PersistedGrant>($"MATCH (n{n.Labels} {{{nameof(PersistedGrant.Key)}:${nameof(key)}}}) " +
                     $"RETURN n"
                     , new { key }).FirstOrDefault());
                 
@@ -86,8 +86,8 @@ namespace N4pper.IdentityServer4.Stores
             {
                 Node n = new Node(type: typeof(PersistedGrant));
 
-                List<Neo4jPersistedGrant> result = await session.AsAsync(s =>
-                    s.ExecuteQuery<Neo4jPersistedGrant>($"MATCH (n{n.Labels} {{{nameof(PersistedGrant.SubjectId)}:${nameof(subjectId)}}}) " +
+                List<PersistedGrant> result = await session.AsAsync(s =>
+                    s.ExecuteQuery<PersistedGrant>($"MATCH (n{n.Labels} {{{nameof(PersistedGrant.SubjectId)}:${nameof(subjectId)}}}) " +
                     $"RETURN n"
                     , new { subjectId }).ToList());
 
@@ -133,9 +133,7 @@ namespace N4pper.IdentityServer4.Stores
                 Rel rel = new Rel(type: typeof(Relationships.Has));
 
                 IResultSummary summary = await (await session.RunAsync(
-                    $"MATCH (c{c.Labels} {{{nameof(Client.ClientId)}:${nameof(clientId)}}})" +
-                    $"-{rel}->" +
-                    $"(n{n.Labels} {{{nameof(PersistedGrant.SubjectId)}:${nameof(subjectId)}}}) " +
+                    $"MATCH (n{n.Labels} {{{nameof(PersistedGrant.ClientId)}:${nameof(clientId)},{nameof(PersistedGrant.SubjectId)}:${nameof(subjectId)}}})" +
                     $"DETACH DELETE n"
                     , new { clientId, subjectId })).SummaryAsync();
             }
@@ -157,9 +155,7 @@ namespace N4pper.IdentityServer4.Stores
                 Rel rel = new Rel(type: typeof(Relationships.Has));
 
                 IResultSummary summary = await(await session.RunAsync(
-                    $"MATCH (c{c.Labels} {{{nameof(Client.ClientId)}:${nameof(clientId)}}})" +
-                    $"-{rel}->" +
-                    $"(n{n.Labels} {{{nameof(PersistedGrant.SubjectId)}:${nameof(subjectId)},{nameof(PersistedGrant.Type)}:${nameof(type)}}}) " +
+                    $"MATCH (n{n.Labels} {{{nameof(PersistedGrant.ClientId)}:${nameof(clientId)},{nameof(PersistedGrant.SubjectId)}:${nameof(subjectId)},{nameof(PersistedGrant.Type)}:${nameof(type)}}}) " +
                     $"DETACH DELETE n"
                     , new { clientId, subjectId, type })).SummaryAsync();
             }

@@ -58,7 +58,7 @@ namespace N4pper.IdentityServer4.Stores
                 $"OPTIONAL MATCH (c)-{rel}->(cl{claim.Labels}) " +
                 $"WITH c, p, s, cl ORDER BY id(c), id(p), id(s), id(cl) " +
                 $"WITH c, {{props: collect(distinct p), secs:collect(distinct s), cls:collect(distinct cl)}} AS val " +
-                $"WITH c, val.props as p, val.secs as s, val.cls as cl " +
+                $"WITH c, val.props AS p, val.secs AS s, val.cls AS cl ORDER BY id(c) " +
                 $"RETURN c, p, s, cl", 
                 (client, props, secrets, claims)=> 
                 {
