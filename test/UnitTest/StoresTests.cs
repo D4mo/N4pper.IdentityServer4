@@ -408,6 +408,8 @@ namespace UnitTest
             Assert.Equal(new List<Secret>(), result.ApiSecrets);
 
             Assert.Throws<AggregateException>(() => Provider.SetApiResourceSecretsAsync(result, null).Wait());
+
+            Provider.RemoveResourceAsync(apiResource).Wait();
         }
         
         [Fact]
@@ -458,6 +460,8 @@ namespace UnitTest
             Assert.Equal(new List<Scope>(), result.Scopes);
 
             Assert.Throws<AggregateException>(() => Provider.SetApiResourceScopesAsync(result, null).Wait());
+
+            Provider.RemoveResourceAsync(apiResource).Wait();
         }
 
         [Fact]
