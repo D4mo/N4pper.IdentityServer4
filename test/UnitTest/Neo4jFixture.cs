@@ -24,7 +24,13 @@ namespace UnitTest
             
             sc.AddN4pper();
             sc.AddIdentityServer()
-                .AddNeo4jConfigurationAndOperationalStore(new Options() { Uri = Configuration.GetConnectionString("DefaultConnection") });
+                .AddNeo4jConfigurationAndOperationalStore(new Options()
+                {
+                    Uri = Configuration.GetConnectionString("DefaultConnection"),
+                    TokenCleanupBatchSize = 2,
+                    EnableTokenCleanup = true,
+                    TokenCleanupInterval = 10
+                });
 
             sc.AddTransient<Neo4jServer_DriverBuilder>(provider => new Neo4jServer_DriverBuilder(Configuration));
 

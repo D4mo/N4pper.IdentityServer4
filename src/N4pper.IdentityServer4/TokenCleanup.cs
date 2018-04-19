@@ -111,7 +111,7 @@ namespace N4pper.IdentityServer4
                             IResultSummary summary = session.Run(
                                 $"MATCH (p{n.Labels}) " +
                                 $"WHERE p.{nameof(PersistedGrant.Expiration)}<$date " +
-                                $"ORDER BY p.{nameof(PersistedGrant.Key)} " +
+                                $"WITH p ORDER BY p.{nameof(PersistedGrant.Key)} " +
                                 $"LIMIT $count " +
                                 $"DETACH DELETE p",
                                 new { date = DateTime.UtcNow, count = _options.TokenCleanupBatchSize }).Summary;

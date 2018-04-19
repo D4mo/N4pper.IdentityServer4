@@ -1,6 +1,8 @@
 using IdentityServer4.Models;
+using IdentityServer4.Services;
 using IdentityServer4.Stores;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using N4pper;
 using N4pper.IdentityServer4;
 using System;
@@ -8,6 +10,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Security.Claims;
+using System.Threading;
+using System.Threading.Tasks;
 using Xunit;
 
 namespace UnitTest
@@ -503,6 +507,59 @@ namespace UnitTest
             Assert.Equal(3, res.IdentityResources.Count);
             Assert.Equal(argScope.Select(p => p.Name), res.ApiResources.First().Scopes.Select(p => p.Name));
             Assert.Equal(argSec, res.ApiResources.First().ApiSecrets);
+        }
+
+        [Fact]
+        public void CorsPolicy()
+        {
+            IClientStore store = Fixture.GetService<IClientStore>();
+
+            Client client = CreateClient();
+
+            client.AllowedCorsOrigins = new List<string>() { "aaa","bbb" };
+
+            Client result = store.FindClientByIdAsync(client.ClientId).Result;
+            Assert.Null(result);
+
+            Provider.AddClientAsync(client).Wait();
+            
+            result = store.FindClientByIdAsync(client.ClientId).Result;
+            Assert.NotNull(result);
+
+            ICorsPolicyService cors = Fixture.GetService<ICorsPolicyService>();
+
+            Assert.False(cors.IsOriginAllowedAsync("ccc").Result);
+            Assert.True(cors.IsOriginAllowedAsync("aaa").Result);
+        }
+
+        [Fact]
+        public void TokenCleanup()
+        {
+            IPersistedGrantStore store = Fixture.GetService<IPersistedGrantStore>();
+            IHostedService svc = Fixture.GetService<IHostedService>();
+            svc.StartAsync(default(CancellationToken)).Wait();
+
+            PersistedGrant grant1 = CreateGrant("aaa", "t1");
+            PersistedGrant grant2 = CreateGrant("aaa");
+
+            grant1.Expiration = DateTime.Now.Add(TimeSpan.FromSeconds(15));
+            grant2.Expiration = DateTime.Now.Add(TimeSpan.FromSeconds(25));
+
+            store.StoreAsync(grant1).Wait();
+            store.StoreAsync(grant2).Wait();
+
+            List<PersistedGrant> results = store.GetAllAsync("aaa").Result?.ToList();
+            Assert.Equal(2, results.Count);
+
+            Task.Delay(20000).Wait();
+
+            results = store.GetAllAsync("aaa").Result?.ToList();
+            Assert.Equal(1, results.Count);
+
+            Task.Delay(10000).Wait();
+
+            results = store.GetAllAsync("aaa").Result?.ToList();
+            Assert.Equal(0, results.Count);
         }
     }
 }

@@ -80,6 +80,7 @@ namespace N4pper.IdentityServer4
 
             //configuration
             builder.Services.AddSingleton(options);
+            builder.Services.AddSingleton<IHostedService, TokenCleanupHost>();
 
             builder.Services.AddSingleton<IdentityServerDriverProvider>(provider => new InternalDriverProvider(options.Uri, options.Token, options.Configuration, provider.GetRequiredService<N4pperManager>()));
 

@@ -14,7 +14,7 @@ namespace N4pper.IdentityServer4.Services
 {
     public class Neo4jCorsPolicyService : ICorsPolicyService
     {
-        private readonly IHttpContextAccessor _context;
+        private readonly IdentityServerDriverProvider _context;
         private readonly ILogger<Neo4jCorsPolicyService> _logger;
 
         /// <summary>
@@ -23,7 +23,7 @@ namespace N4pper.IdentityServer4.Services
         /// <param name="context">The context.</param>
         /// <param name="logger">The logger.</param>
         /// <exception cref="ArgumentNullException">context</exception>
-        public Neo4jCorsPolicyService(IHttpContextAccessor context, ILogger<Neo4jCorsPolicyService> logger)
+        public Neo4jCorsPolicyService(IdentityServerDriverProvider context, ILogger<Neo4jCorsPolicyService> logger)
         {
             _context = context ?? throw new ArgumentNullException(nameof(context));
             _logger = logger;
@@ -36,10 +36,7 @@ namespace N4pper.IdentityServer4.Services
         /// <returns></returns>
         public async Task<bool> IsOriginAllowedAsync(string origin)
         {
-            // doing this here and not in the ctor because: https://github.com/aspnet/CORS/issues/105
-            var dbContext = _context.HttpContext.RequestServices.GetRequiredService<IdentityServerDriverProvider>();
-
-            using (Neo4j.Driver.V1.ISession session = dbContext.GetDriver().Session())
+            using (Neo4j.Driver.V1.ISession session = _context.GetDriver().Session())
             {
                 Node n = new Node(type: typeof(Client));
 
