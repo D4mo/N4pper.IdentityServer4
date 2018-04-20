@@ -60,8 +60,13 @@ namespace UnitTest
             Assert.Equal(new string[] { "aaa", "ccc" }, result.RedirectUris);
             Assert.Equal("test2", result.ClientName);
 
+            List<Client> results = Provider.GetAllClientsAsync().Result.ToList();
+            Assert.Equal(1, results.Count);
+            Assert.Equal(result.ClientId, results.First().ClientId);
+
             Provider.RemoveClientAsync(result).Wait();
             result = store.FindClientByIdAsync(client.ClientId).Result;
+
             Assert.Null(result);
         }
 

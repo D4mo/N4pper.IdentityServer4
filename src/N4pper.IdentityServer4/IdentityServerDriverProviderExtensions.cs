@@ -14,7 +14,7 @@ namespace N4pper.IdentityServer4
 {
     public static class IdentityServerDriverProviderExtensions
     {
-        public static async Task<IEnumerable<Client>> GetAllClients(this IdentityServerDriverProvider ext)
+        public static async Task<IEnumerable<Client>> GetAllClientsAsync(this IdentityServerDriverProvider ext)
         {
             ext = ext ?? throw new ArgumentNullException(nameof(ext));
 
@@ -100,7 +100,7 @@ namespace N4pper.IdentityServer4
             }
         }
 
-        public static async Task SetClientPropsAsync(this IdentityServerDriverProvider ext, Client client, Dictionary<string, string> properties)
+        public static async Task SetClientPropsAsync(this IdentityServerDriverProvider ext, Client client, IDictionary<string, string> properties)
         {
             ext = ext ?? throw new ArgumentNullException(nameof(ext));
 
