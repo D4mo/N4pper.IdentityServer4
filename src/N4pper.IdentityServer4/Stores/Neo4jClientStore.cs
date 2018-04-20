@@ -51,7 +51,7 @@ namespace N4pper.IdentityServer4.Stores
                 Rel rel = new Rel(type : typeof(Relationships.Has));
 
                 Client result = await session.AsAsync(s=>
-                s.ExecuteQuery<Neo4jClient, IEnumerable<Neo4jProperty>, IEnumerable<Neo4jSecret>, IEnumerable<Neo4jClaim>>(
+                s.ExecuteQuery<Client, IEnumerable<Neo4jProperty>, IEnumerable<Secret>, IEnumerable<Neo4jClaim>>(
                 $"MATCH (c{cli.Labels} {{{nameof(Client.ClientId)}:${nameof(clientId)}}}) " +
                 $"OPTIONAL MATCH (c)-{rel}->(p{prop.Labels}) " +
                 $"OPTIONAL MATCH (c)-{rel}->(s{secret.Labels}) " +

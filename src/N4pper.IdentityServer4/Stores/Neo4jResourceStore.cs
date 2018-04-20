@@ -87,8 +87,8 @@ namespace N4pper.IdentityServer4.Stores
                 Node scope = new Node(type: typeof(Scope));
                 Rel rel = new Rel(type: typeof(Relationships.Has));
 
-                List<Neo4jApiResource> result = await session.AsAsync(s =>
-                s.ExecuteQuery<Neo4jApiResource, IEnumerable<Neo4jSecret>, IEnumerable<Neo4jScope>>(
+                List<ApiResource> result = await session.AsAsync(s =>
+                s.ExecuteQuery<ApiResource, IEnumerable<Secret>, IEnumerable<Scope>>(
                 $"MATCH (c{a.Labels}) " +
                 $"OPTIONAL MATCH (c)-{rel}->(s{secret.Labels}) " +
                 $"OPTIONAL MATCH (c)-{rel}->(sc{scope.Labels}) " +
@@ -124,8 +124,8 @@ namespace N4pper.IdentityServer4.Stores
             {
                 Node a = new Node(type: typeof(IdentityResource));
 
-                List<Neo4jIdentityResource> result = await session.AsAsync(s =>
-                s.ExecuteQuery<Neo4jIdentityResource>(
+                List<IdentityResource> result = await session.AsAsync(s =>
+                s.ExecuteQuery<IdentityResource>(
                 $"MATCH (c{a.Labels}) " +
                 $"WHERE c.{nameof(IdentityResource.Name)} IN ${nameof(names)} " +
                 $"RETURN c",
@@ -150,8 +150,8 @@ namespace N4pper.IdentityServer4.Stores
                 Node scope = new Node(type: typeof(Scope));
                 Rel rel = new Rel(type: typeof(Relationships.Has));
 
-                List<Neo4jApiResource> apiResources = await session.AsAsync(s =>
-                s.ExecuteQuery<Neo4jApiResource, IEnumerable<Neo4jSecret>, IEnumerable<Neo4jScope>>(
+                List<ApiResource> apiResources = await session.AsAsync(s =>
+                s.ExecuteQuery<ApiResource, IEnumerable<Secret>, IEnumerable<Scope>>(
                 $"MATCH (c{a.Labels}) " +
                 $"OPTIONAL MATCH (c)-{rel}->(s{secret.Labels}) " +
                 $"OPTIONAL MATCH (c)-{rel}->(sc{scope.Labels}) " +
@@ -169,8 +169,8 @@ namespace N4pper.IdentityServer4.Stores
 
                 Node i = new Node(type: typeof(IdentityResource));
 
-                List<Neo4jIdentityResource> identityResources = await session.AsAsync(s =>
-                s.ExecuteQuery<Neo4jIdentityResource>(
+                List<IdentityResource> identityResources = await session.AsAsync(s =>
+                s.ExecuteQuery<IdentityResource>(
                 $"MATCH (c{i.Labels}) " +
                 $"RETURN c")
                 .ToList());

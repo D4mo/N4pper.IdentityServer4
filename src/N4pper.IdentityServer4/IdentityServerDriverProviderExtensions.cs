@@ -14,6 +14,40 @@ namespace N4pper.IdentityServer4
 {
     public static class IdentityServerDriverProviderExtensions
     {
+        public static async Task<IEnumerable<Client>> GetAllClients(this IdentityServerDriverProvider ext)
+        {
+            ext = ext ?? throw new ArgumentNullException(nameof(ext));
+
+            using (ISession session = ext.GetDriver().Session())
+            {
+                Node cli = new Node(type: typeof(Client));
+                Node prop = new Node(type: typeof(Neo4jProperty));
+                Node secret = new Node(type: typeof(Secret));
+                Node claim = new Node(type: typeof(Neo4jClaim));
+                Rel rel = new Rel(type: typeof(Relationships.Has));
+
+                List<Client> result = await session.AsAsync(s =>
+                s.ExecuteQuery<Client, IEnumerable<Neo4jProperty>, IEnumerable<Neo4jSecret>, IEnumerable<Neo4jClaim>>(
+                $"MATCH (c{cli.Labels}) " +
+                $"OPTIONAL MATCH (c)-{rel}->(p{prop.Labels}) " +
+                $"OPTIONAL MATCH (c)-{rel}->(s{secret.Labels}) " +
+                $"OPTIONAL MATCH (c)-{rel}->(cl{claim.Labels}) " +
+                $"WITH c, p, s, cl ORDER BY id(c), id(p), id(s), id(cl) " +
+                $"WITH c, {{props: collect(distinct p), secs:collect(distinct s), cls:collect(distinct cl)}} AS val " +
+                $"WITH c, val.props AS p, val.secs AS s, val.cls AS cl ORDER BY id(c) " +
+                $"RETURN c, p, s, cl",
+                (client, props, secrets, claims) =>
+                {
+                    client.Properties = props?.ToDictionary(p => p.Name, p => p.Value);
+                    client.Claims = claims?.Select(p => p.ToClaim())?.ToList();
+                    client.ClientSecrets = secrets?.Select(p => p as Secret)?.ToList();
+                    return client;
+                })
+                .ToList());
+
+                return result;
+            }
+        }
         public static async Task AddClientAsync(this IdentityServerDriverProvider ext, Client client)
         {
             ext = ext ?? throw new ArgumentNullException(nameof(ext));

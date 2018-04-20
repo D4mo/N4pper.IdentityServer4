@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>netcoreapp2.0</TargetFramework>
-    <Version>0.1.0</Version>
+    <Version>0.1.1</Version>
     <Company>asiknow.it</Company>
     <Description>IdentityServer4 storage providers for neo4j based on the official driver and N4pper</Description>
     <PackageLicenseUrl>https://github.com/goldenass/N4pper.IdentityServer4/blob/master/LICENSE</PackageLicenseUrl>
