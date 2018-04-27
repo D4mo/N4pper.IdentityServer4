@@ -48,7 +48,7 @@ namespace N4pper.IdentityServer4.Stores
                 IResultSummary summary = await (await session.RunAsync(
                     $"MATCH (c{cli.Labels} {{{nameof(Client.ClientId)}:$value.{nameof(token.ClientId)}}}) " +
                     $"MERGE (c)-{rel}->(n{n.Labels} {{{nameof(PersistedGrant.Key)}:$value.{nameof(token.Key)}}}) " +
-                    $"ON CREATE SET n+=$value, n.{nameof(IGraphEntity.EntityId)}=id(n) " +
+                    $"ON CREATE SET n+=$value, n.{nameof(IGraphEntity.EntityId)}=id(n), n :{typeof(Neo4jPersistedGrant).Name} " +
                     $"ON MATCH SET n+=$value, n.{nameof(IGraphEntity.EntityId)}=id(n) ", new { value = token })).SummaryAsync();
 
                 if (!summary.Counters.ContainsUpdates && summary.Counters.NodesCreated == 0)

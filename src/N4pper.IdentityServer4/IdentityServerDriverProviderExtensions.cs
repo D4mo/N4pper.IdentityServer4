@@ -58,7 +58,7 @@ namespace N4pper.IdentityServer4
                 Node n = new Node(type: typeof(Neo4jClient));
 
                 Neo4jClient newClient = await session.AsAsync(s=>
-                s.ExecuteQuery<Neo4jClient>($"CREATE (p{n.Labels}) SET p+=${nameof(client)}, p.{nameof(IGraphEntity.EntityId)}=id(p) RETURN p", 
+                s.ExecuteQuery<Neo4jClient>($"CREATE (p{n.Labels}) SET p+=${nameof(client)}, p.{nameof(IGraphEntity.EntityId)}=id(p), p :{typeof(Neo4jClient).Name} RETURN p", 
                     new { client = client.ExludeProperties(p=>new { p.Properties, p.Claims, p.ClientSecrets }) }).FirstOrDefault());
 
                 if (client is Neo4jClient)
@@ -122,7 +122,7 @@ namespace N4pper.IdentityServer4
                     $"WITH n, collect(p) AS olds " +
                     $"UNWIND ${nameof(props)} AS row " +
                     $"CREATE (n)-{rel}->(q{p.Labels}) " +
-                    $"SET q+=row,q.{nameof(IGraphEntity.EntityId)}=id(q) " +
+                    $"SET q+=row,q.{nameof(IGraphEntity.EntityId)}=id(q), q :{typeof(Neo4jProperty).Name} " +
                     $"WITH olds " +
                     $"UNWIND olds AS old " +
                     $"DETACH DELETE old",
@@ -217,7 +217,7 @@ namespace N4pper.IdentityServer4
                     $"WITH n, collect(p) AS olds " +
                     $"UNWIND ${nameof(newClaims)} AS row " +
                     $"CREATE (n)-{rel}->(q{p.Labels}) " +
-                    $"SET q+=row,q.{nameof(IGraphEntity.EntityId)}=id(q) " +
+                    $"SET q+=row,q.{nameof(IGraphEntity.EntityId)}=id(q), q :{typeof(Neo4jClaim).Name} " +
                     $"WITH olds " +
                     $"UNWIND olds AS old " +
                     $"DETACH DELETE old",
@@ -312,7 +312,7 @@ namespace N4pper.IdentityServer4
                     $"WITH n, collect(p) AS olds " +
                     $"UNWIND ${nameof(newSecrets)} AS row " +
                     $"CREATE (n)-{rel}->(q{p.Labels}) " +
-                    $"SET q+=row,q.{nameof(IGraphEntity.EntityId)}=id(q) " +
+                    $"SET q+=row,q.{nameof(IGraphEntity.EntityId)}=id(q), q :{typeof(Neo4jSecret).Name} " +
                     $"WITH olds " +
                     $"UNWIND olds AS old " +
                     $"DETACH DELETE old",
@@ -400,7 +400,7 @@ namespace N4pper.IdentityServer4
                     $"CREATE (c)" +
                     $"-{rel}->" +
                     $"(p{n.Labels}) " +
-                    $"SET p+=${nameof(grant)}, p.{nameof(IGraphEntity.EntityId)}=id(p) RETURN p",
+                    $"SET p+=${nameof(grant)}, p.{nameof(IGraphEntity.EntityId)}=id(p), p :{typeof(Neo4jPersistedGrant).Name} RETURN p",
                     new { grant }).FirstOrDefault());
 
                 if (grant is IGraphEntity)
@@ -461,7 +461,7 @@ namespace N4pper.IdentityServer4
                 Node n = new Node(type: resType);
 
                 Resource newResource = await session.AsAsync(s =>
-                s.ExecuteQuery<Resource>($"CREATE (p{n.Labels}) SET p+=${nameof(resource)}, p.{nameof(IGraphEntity.EntityId)}=id(p) RETURN p",
+                s.ExecuteQuery<Resource>($"CREATE (p{n.Labels}) SET p+=${nameof(resource)}, p.{nameof(IGraphEntity.EntityId)}=id(p), p :{typeof(Resource).Name}, p :{resType.Name} RETURN p",
                     new { resource = resArg }).FirstOrDefault());
 
                 if (resource is IGraphEntity)
@@ -529,7 +529,7 @@ namespace N4pper.IdentityServer4
                     $"WITH n, collect(p) AS olds " +
                     $"UNWIND ${nameof(newSecrets)} AS row " +
                     $"CREATE (n)-{rel}->(q{p.Labels}) " +
-                    $"SET q+=row,q.{nameof(IGraphEntity.EntityId)}=id(q) " +
+                    $"SET q+=row,q.{nameof(IGraphEntity.EntityId)}=id(q), q :{typeof(Neo4jSecret).Name} " +
                     $"WITH olds " +
                     $"UNWIND olds AS old " +
                     $"DETACH DELETE old",
@@ -623,7 +623,7 @@ namespace N4pper.IdentityServer4
                     $"WITH n, collect(p) AS olds " +
                     $"UNWIND ${nameof(newScopes)} AS row " +
                     $"CREATE (n)-{rel}->(q{p.Labels}) " +
-                    $"SET q+=row,q.{nameof(IGraphEntity.EntityId)}=id(q) " +
+                    $"SET q+=row,q.{nameof(IGraphEntity.EntityId)}=id(q), q :{typeof(Neo4jScope).Name} " +
                     $"WITH olds " +
                     $"UNWIND olds AS old " +
                     $"DETACH DELETE old",
