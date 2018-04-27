@@ -391,9 +391,16 @@ namespace N4pper.IdentityServer4
             using (ISession session = ext.GetDriver().Session())
             {
                 Node n = new Node(type: typeof(Neo4jPersistedGrant));
+                Node c = new Node(type: typeof(Client));
+                Rel rel = new Rel(type: typeof(Relationships.Has));
 
                 Neo4jPersistedGrant newGrant = await session.AsAsync(s =>
-                s.ExecuteQuery<Neo4jPersistedGrant>($"CREATE (p{n.Labels}) SET p+=${nameof(grant)}, p.{nameof(IGraphEntity.EntityId)}=id(p) RETURN p",
+                s.ExecuteQuery<Neo4jPersistedGrant>(
+                    $"MATCH (c{c.Labels} {{{nameof(Client.ClientId)}:${nameof(grant)}.{nameof(grant.ClientId)}}}) " +
+                    $"CREATE (c)" +
+                    $"-{rel}->" +
+                    $"(p{n.Labels}) " +
+                    $"SET p+=${nameof(grant)}, p.{nameof(IGraphEntity.EntityId)}=id(p) RETURN p",
                     new { grant }).FirstOrDefault());
 
                 if (grant is IGraphEntity)
@@ -408,9 +415,13 @@ namespace N4pper.IdentityServer4
             using (ISession session = ext.GetDriver().Session())
             {
                 Node n = new Node(type: typeof(PersistedGrant));
+                Node c = new Node(type: typeof(Client));
+                Rel rel = new Rel(type: typeof(Relationships.Has));
 
                 await session.RunAsync(
-                    $"MATCH (n{n.Labels} {{{nameof(PersistedGrant.Key)}:${nameof(grant)}.{nameof(PersistedGrant.Key)}}}) " +
+                    $"MATCH (c{c.Labels} {{{nameof(Client.ClientId)}:${nameof(grant)}.{nameof(grant.ClientId)}}})" +
+                    $"-{rel}->" +
+                    $"(n{n.Labels} {{{nameof(PersistedGrant.Key)}:${nameof(grant)}.{nameof(PersistedGrant.Key)}}}) " +
                     $"SET n+=${nameof(grant)}",
                     new { grant });
             }
@@ -420,15 +431,20 @@ namespace N4pper.IdentityServer4
             ext = ext ?? throw new ArgumentNullException(nameof(ext));
 
             string key = grant?.Key ?? throw new ArgumentNullException(nameof(grant));
+            string clientId = grant?.ClientId ?? throw new ArgumentNullException(nameof(grant));
 
             using (ISession session = ext.GetDriver().Session())
             {
                 Node n = new Node(type: typeof(PersistedGrant));
+                Node c = new Node(type: typeof(Client));
+                Rel rel = new Rel(type: typeof(Relationships.Has));
 
                 await session.RunAsync(
-                    $"MATCH (n{n.Labels} {{{nameof(PersistedGrant.Key)}:${nameof(key)}}})" +
+                    $"MATCH (c{c.Labels} {{{nameof(Client.ClientId)}:${nameof(clientId)}}})" +
+                    $"-{rel}->" +
+                    $"(n{n.Labels} {{{nameof(PersistedGrant.Key)}:${nameof(key)}}})" +
                     $"DETACH DELETE n",
-                    new { key });
+                    new { key, clientId });
             }
         }
         

@@ -252,7 +252,11 @@ namespace UnitTest
         {
             IPersistedGrantStore store = Fixture.GetService<IPersistedGrantStore>();
 
-            PersistedGrant grant = CreateGrant();
+            Client client = CreateClient();
+
+            Provider.AddClientAsync(client).Wait();
+
+            PersistedGrant grant = CreateGrant(client.ClientId);
 
             PersistedGrant result = store.GetAsync(grant.Key).Result;
             Assert.Null(result);
@@ -282,11 +286,15 @@ namespace UnitTest
         {
             IPersistedGrantStore store = Fixture.GetService<IPersistedGrantStore>();
 
-            PersistedGrant grant1 = CreateGrant("aaa","t1");
-            PersistedGrant grant2 = CreateGrant("aaa");
-            PersistedGrant grant3 = CreateGrant("aaa");
-            PersistedGrant grant4 = CreateGrant();
-            PersistedGrant grant5 = CreateGrant();
+            Client client = CreateClient();
+
+            Provider.AddClientAsync(client).Wait();
+
+            PersistedGrant grant1 = CreateGrant(client.ClientId,"aaa","t1");
+            PersistedGrant grant2 = CreateGrant(client.ClientId, "aaa");
+            PersistedGrant grant3 = CreateGrant(client.ClientId, "aaa");
+            PersistedGrant grant4 = CreateGrant(client.ClientId);
+            PersistedGrant grant5 = CreateGrant(client.ClientId);
 
             store.StoreAsync(grant1).Wait();
             store.StoreAsync(grant2).Wait();
@@ -542,10 +550,15 @@ namespace UnitTest
         {
             IPersistedGrantStore store = Fixture.GetService<IPersistedGrantStore>();
             IHostedService svc = Fixture.GetService<IHostedService>();
+
+            Client client = CreateClient();
+
+            Provider.AddClientAsync(client).Wait();
+
             svc.StartAsync(default(CancellationToken)).Wait();
 
-            PersistedGrant grant1 = CreateGrant("aaa", "t1");
-            PersistedGrant grant2 = CreateGrant("aaa");
+            PersistedGrant grant1 = CreateGrant(client.ClientId, "aaa", "t1");
+            PersistedGrant grant2 = CreateGrant(client.ClientId, "aaa");
 
             grant1.Expiration = DateTime.Now.Add(TimeSpan.FromSeconds(15));
             grant2.Expiration = DateTime.Now.Add(TimeSpan.FromSeconds(25));

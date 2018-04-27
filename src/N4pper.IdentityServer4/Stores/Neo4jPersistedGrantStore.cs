@@ -41,10 +41,13 @@ namespace N4pper.IdentityServer4.Stores
         {
             using (ISession session = _context.GetDriver().Session())
             {
+                Node cli = new Node(type: typeof(Client));
                 Node n = new Node(type: typeof(PersistedGrant));
+                Rel rel = new Rel(type:typeof(Relationships.Has));
 
                 IResultSummary summary = await (await session.RunAsync(
-                    $"MERGE (n{n.Labels} {{{nameof(PersistedGrant.Key)}:$value.{nameof(token.Key)}}}) " +
+                    $"MATCH (c{cli.Labels} {{{nameof(Client.ClientId)}:$value.{nameof(token.ClientId)}}}) " +
+                    $"MERGE (c)-{rel}->(n{n.Labels} {{{nameof(PersistedGrant.Key)}:$value.{nameof(token.Key)}}}) " +
                     $"ON CREATE SET n+=$value, n.{nameof(IGraphEntity.EntityId)}=id(n) " +
                     $"ON MATCH SET n+=$value, n.{nameof(IGraphEntity.EntityId)}=id(n) ", new { value = token })).SummaryAsync();
 
@@ -133,7 +136,9 @@ namespace N4pper.IdentityServer4.Stores
                 Rel rel = new Rel(type: typeof(Relationships.Has));
 
                 IResultSummary summary = await (await session.RunAsync(
-                    $"MATCH (n{n.Labels} {{{nameof(PersistedGrant.ClientId)}:${nameof(clientId)},{nameof(PersistedGrant.SubjectId)}:${nameof(subjectId)}}})" +
+                    $"MATCH (c{c.Labels} {{{nameof(Client.ClientId)}:${nameof(clientId)}}})" +
+                    $"-{rel}->" +
+                    $"(n{n.Labels} {{{nameof(PersistedGrant.ClientId)}:${nameof(clientId)},{nameof(PersistedGrant.SubjectId)}:${nameof(subjectId)}}})" +
                     $"DETACH DELETE n"
                     , new { clientId, subjectId })).SummaryAsync();
             }
@@ -155,7 +160,9 @@ namespace N4pper.IdentityServer4.Stores
                 Rel rel = new Rel(type: typeof(Relationships.Has));
 
                 IResultSummary summary = await(await session.RunAsync(
-                    $"MATCH (n{n.Labels} {{{nameof(PersistedGrant.ClientId)}:${nameof(clientId)},{nameof(PersistedGrant.SubjectId)}:${nameof(subjectId)},{nameof(PersistedGrant.Type)}:${nameof(type)}}}) " +
+                    $"MATCH (c{c.Labels} {{{nameof(Client.ClientId)}:${nameof(clientId)}}})" +
+                    $"-{rel}->" +
+                    $"(n{n.Labels} {{{nameof(PersistedGrant.ClientId)}:${nameof(clientId)},{nameof(PersistedGrant.SubjectId)}:${nameof(subjectId)},{nameof(PersistedGrant.Type)}:${nameof(type)}}}) " +
                     $"DETACH DELETE n"
                     , new { clientId, subjectId, type })).SummaryAsync();
             }

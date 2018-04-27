@@ -31,11 +31,11 @@ namespace UnitTest
                 Value = Guid.NewGuid().ToString("n")
             };
         }
-        public PersistedGrant CreateGrant(string subjectId = null, string type = null)
+        public PersistedGrant CreateGrant(string clientId, string subjectId = null, string type = null)
         {
             return new PersistedGrant()
             {
-                ClientId = "client",
+                ClientId = clientId,
                 Expiration = new DateTime(2200,1,1),
                 SubjectId = subjectId ?? Guid.NewGuid().ToString("n"),
                 CreationTime = new DateTime(2190,1,1),
