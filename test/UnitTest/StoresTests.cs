@@ -491,18 +491,21 @@ namespace UnitTest
             IdentityResource res3 = CreateIdentityResource();
             IdentityResource res4 = CreateIdentityResource();
             IdentityResource res5 = CreateIdentityResource();
+            ApiResource res6 = CreateApiResource();
 
             Provider.AddResourceAsync(res1).Wait();
             Provider.AddResourceAsync(res2).Wait();
             Provider.AddResourceAsync(res3).Wait();
             Provider.AddResourceAsync(res4).Wait();
             Provider.AddResourceAsync(res5).Wait();
+            Provider.AddResourceAsync(res6).Wait();
 
             List<Scope> argScope = new List<Scope>() { new Scope() { Name = "aaax" }, new Scope() { Name = "ccc" } };
             List<Secret> argSec = new List<Secret>() { CreateSecret(), CreateSecret() };
             Provider.SetApiResourceScopesAsync(res1, argScope).Wait();
             Provider.SetApiResourceSecretsAsync(res1, argSec).Wait();
             Provider.SetApiResourceScopesAsync(res2, new List<Scope>() { new Scope() { Name = "aaa" }, new Scope() { Name = "bbb" } }).Wait();
+            Provider.SetApiResourceScopesAsync(res6, new List<Scope>() { new Scope() { Name = "qqq" } }).Wait();
 
             List<IdentityResource> idres = store.FindIdentityResourcesByScopeAsync(new string[] { res4.Name, res5.Name }).Result?.ToList();
             Assert.NotNull(idres);
@@ -516,7 +519,7 @@ namespace UnitTest
 
             Resources res = store.GetAllResourcesAsync().Result;
             Assert.NotNull(res);
-            Assert.Equal(2, res.ApiResources.Count);
+            Assert.Equal(3, res.ApiResources.Count);
             Assert.Equal(3, res.IdentityResources.Count);
             Assert.Equal(argScope.Select(p => p.Name), res.ApiResources.First().Scopes.Select(p => p.Name));
             Assert.Equal(argSec, res.ApiResources.First().ApiSecrets);

@@ -95,7 +95,7 @@ namespace N4pper.IdentityServer4.Stores
                 $"WITH c,s,sc ORDER BY id(c),id(s),id(sc) " +
                 $"WITH c, {{s:collect(distinct s), sc:collect(distinct sc)}} AS val " +
                 $"WITH c, val.s AS s, val.sc AS sc " +
-                $"WHERE sc IS NOT NULL AND FILTER(x in sc where x.{nameof(Scope.Name)} in ${nameof(names)}) <> sc " +
+                $"WHERE sc IS NOT NULL AND FILTER(x in sc where x.{nameof(Scope.Name)} in ${nameof(names)}) <> [] " +
                 $"WITH c,s,sc ORDER BY id(c) " +
                 $"RETURN c, s, sc",
                 (api, secrets, scopes) =>
