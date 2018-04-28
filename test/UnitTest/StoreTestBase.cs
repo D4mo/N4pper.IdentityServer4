@@ -50,7 +50,8 @@ namespace UnitTest
             return new ApiResource()
             {
                 Name = Guid.NewGuid().ToString("n"),
-                Description = "description"
+                Description = "description",
+                Enabled = true
             };
         }
         public IdentityResource CreateIdentityResource()

@@ -498,7 +498,7 @@ namespace UnitTest
             Provider.AddResourceAsync(res4).Wait();
             Provider.AddResourceAsync(res5).Wait();
 
-            List<Scope> argScope = new List<Scope>() { new Scope() { Name = "aaa" }, new Scope() { Name = "bbb" }, new Scope() { Name = "ccc" } };
+            List<Scope> argScope = new List<Scope>() { new Scope() { Name = "aaax" }, new Scope() { Name = "ccc" } };
             List<Secret> argSec = new List<Secret>() { CreateSecret(), CreateSecret() };
             Provider.SetApiResourceScopesAsync(res1, argScope).Wait();
             Provider.SetApiResourceSecretsAsync(res1, argSec).Wait();
@@ -520,6 +520,12 @@ namespace UnitTest
             Assert.Equal(3, res.IdentityResources.Count);
             Assert.Equal(argScope.Select(p => p.Name), res.ApiResources.First().Scopes.Select(p => p.Name));
             Assert.Equal(argSec, res.ApiResources.First().ApiSecrets);
+
+            res = store.FindEnabledResourcesByScopeAsync(new string[] { "bbb", "ccc" }).Result;
+            Scope tmp = res.FindApiScope("bbb");
+            Assert.NotNull(tmp);
+            tmp = res.FindApiScope("ccc");
+            Assert.NotNull(tmp);
         }
 
         [Fact]
